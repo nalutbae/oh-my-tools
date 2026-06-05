@@ -70,6 +70,8 @@ export function toHonorific(text: string, level: HonorificLevel): string {
   r = r.replace(/([가-힣]+ㄹ까)\?/g, (_, w: string) => w + "요?");
   r = r.replace(/([가-힣]+)니\?/g, (_, w: string) => h ? w + "니까?" : w + "나요?");
   r = r.replace(/(^|[\s.!?])([가-힣]+)야(?=[\s.!?]|$)/g, (_m, pre: string, w: string) => {
+    // 보호: ~어야, ~아야 (의무/조건 연결어미) → 변환하지 않음
+    if (/[어아]야$|해야$|되어야$/.test(_m.trim())) return _m;
     if (h) return pre + w + "입니다";
     return pre + (hasJong(w[w.length - 1]) ? w + "이에요" : w + "예요");
   });
