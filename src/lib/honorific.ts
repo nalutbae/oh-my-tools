@@ -70,12 +70,28 @@ export function toHonorific(text: string, level: HonorificLevel): string {
   r = r.replace(/([가-힣]+ㄹ까)\?/g, (_, w: string) => w + "요?");
   r = r.replace(/([가-힣]+)니\?/g, (_, w: string) => h ? w + "니까?" : w + "나요?");
   r = r.replace(/(^|[\s.!?])([가-힣]+)야(?=[\s.!?]|$)/g, (_m, pre: string, w: string) => {
+function isEoAEnding(ch: string): boolean {
+  // 마지막 음절이 어/아 계열 모음 + 무받침 → ~어야/~아야 패턴으로 판단
+  const c = ch.charCodeAt(0);
+  if (c < 0xac00 || c > 0xd7af) return false;
+  const base = c - 0xac00;
+  const jong = base % 28;
+  if (jong !== 0) return false; // 받침 있으면 제외
+  const vowel = ((base - jong) / 28) % 21;
+  // 어-family: ㅓ(2),ㅕ(3),ㅔ(6),ㅖ(7),ㅝ(14)
+  // 아-family: ㅏ(0),ㅑ(1),ㅐ(4),ㅒ(5),ㅘ(12)
+  return [0,1,4,5,9,10,2,3,6,7,14].includes(vowel);
+}
+
     // 보호: ~어야, ~아야 (의무/조건 연결어미) → 변환하지 않음
-    if (/[어아]야$|해야$|되어야$/.test(_m.trim())) return _m;
+    if (isEoAEnding(w[w.length-1])) return _m;
     if (h) return pre + w + "입니다";
     return pre + (hasJong(w[w.length - 1]) ? w + "이에요" : w + "예요");
   });
-  r = r.replace(/([가-힣]+)(지)(?=[\s.!?]|$)(?!\s*않)/g, (_, w: string) => h ? w + "지 않습니다" : w + "지요");
+  r = r.replace(/([가-힣]+)(지)(?=[\s.!?]|$)(?!\s*않)/g, (_m, w: string) => {
+    if (_m.endsWith('까지')) return _m; // 보호: '까지' 입자
+    return h ? w + "지 않습니다" : w + "지요";
+  });
   r = r.replace(/([가-힣]+)(네)(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "습니다" : w + "네요");
   r = r.replace(/([가-힣]+)(군)(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "습니다" : w + "군요");
   r = r.replace(/([가-힣]+[ㄴ])대(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "답니다" : w + "대요");
