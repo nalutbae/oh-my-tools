@@ -90,7 +90,7 @@ function isEoAEnding(ch: string): boolean {
   });
   r = r.replace(/([가-힣]+)(지)(?=[\s.!?]|$)(?!\s*않)/g, (_m, w: string) => {
     // 보호: 명사·입자 (어미가 아닌 지)
-    const nounSuffixes = /(나머지|까지|마저|뿐이지|터이지|듯이지|모양이지|경우지|입장이지|결과지|원인지)$/;
+    const nounSuffixes = /(가지|나머지|까지|마저|뿐이지|터이지|듯이지|모양이지|경우지|입장이지|결과지|원인지)$/;
     if (nounSuffixes.test(_m.trim())) return _m;
     return h ? w + "지 않습니다" : w + "지요";
   });
