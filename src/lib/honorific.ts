@@ -89,7 +89,9 @@ function isEoAEnding(ch: string): boolean {
     return pre + (hasJong(w[w.length - 1]) ? w + "이에요" : w + "예요");
   });
   r = r.replace(/([가-힣]+)(지)(?=[\s.!?]|$)(?!\s*않)/g, (_m, w: string) => {
-    if (_m.endsWith('까지')) return _m; // 보호: '까지' 입자
+    // 보호: 명사·입자 (어미가 아닌 지)
+    const nounSuffixes = /(나머지|까지|마저|뿐이지|터이지|듯이지|모양이지|경우지|입장이지|결과지|원인지)$/;
+    if (nounSuffixes.test(_m.trim())) return _m;
     return h ? w + "지 않습니다" : w + "지요";
   });
   r = r.replace(/([가-힣]+)(네)(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "습니다" : w + "네요");
