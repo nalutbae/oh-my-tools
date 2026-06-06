@@ -1,103 +1,339 @@
+/**
+ * Garu 기반 한국어 경어체 변환 엔진 (v4-final)
+ *
+ * 형태소 분석 → 어근·어미 추출 → 음운 규칙(축약, 불규칙) → 해요체/합쇼체
+ */
+
 export type HonorificLevel = "haeyo" | "hapsyo";
 
-function hasJong(ch: string): boolean {
+type GToken = { text: string; pos: string; start: number; end: number };
+
+// ── 한글 음원 ──
+function decompose(ch: string) {
   const c = ch.charCodeAt(0);
-  return c >= 0xac00 && c <= 0xd7af && (c - 0xac00) % 28 !== 0;
+  if (c < 0xac00 || c > 0xd7a3) return null;
+  const base = c - 0xac00;
+  return {
+    jong: base % 28,
+    jung: Math.floor(base / 28) % 21,
+    cho: Math.floor(base / 588),
+  };
+}
+function compose(cho: number, jung: number, jong: number) {
+  return String.fromCharCode(0xac00 + cho * 588 + jung * 28 + jong);
+}
+function getJong(ch: string) { return decompose(ch)?.jong ?? -1; }
+function getJung(ch: string) { return decompose(ch)?.jung ?? -1; }
+
+// 중성: 0=ㅏ,1=ㅐ,2=ㅑ,3=ㅒ,4=ㅓ,5=ㅔ,6=ㅕ,7=ㅖ,8=ㅗ,9=ㅘ,10=ㅙ,11=ㅚ,
+//       12=ㅛ,13=ㅜ,14=ㅝ,15=ㅞ,16=ㅟ,17=ㅠ,18=ㅡ,19=ㅢ,20=ㅣ
+function pickAeo(last: string): "아" | "어" {
+  return [0, 2, 8, 9, 10, 11, 12].includes(getJung(last)) ? "아" : "어";
 }
 
-/**
- * 해라체/해체 텍스트를 경어체로 변환합니다.
- *
- * 각 어미(ending)마다 2단계 규칙 적용:
- *   1. 어간+어미 패턴: `([가-힣]+)한다` → stem + 변환
- *   2. 단독 어미 패턴: `(^|[\s.!?])한다` → 경계 + 변환
- * (1)은 greedy backtrack 으로 stem 캡처, (2)는 standalone 처리
- */
-export function toHonorific(text: string, level: HonorificLevel): string {
-  let r = text;
-  const h = level === "hapsyo";
+// ── 축약: 어근 + 아/어 ──
+function contract(stem: string): string {
+  if (!stem) return "";
 
-  // ── 해라체 어미별 규칙 (stem+ending → 변환) ──
-  const endings: [string, string, string][] = [
-    ["했다", "했어요", "했습니다"],
-    ["였다", "였어요", "였습니다"],
-    ["았다", "았어요", "았습니다"],
-    ["었다", "었어요", "었습니다"],
-    ["는다", "어요",   "습니다"],
-    ["한다", "해요",   "합니다"],
-    ["된다", "돼요",   "됩니다"],
-  ];
-
-  for (const [end, haeyo, hapsyo] of endings) {
-    const re1 = new RegExp(`([가-힣]+)${end}(?=[\\s.!?]|$)`, "g");
-    const re2 = new RegExp(`(^|[\\s.!?])${end}(?=[\\s.!?]|$)`, "g");
-    r = r.replace(re1, (_, stem: string) => stem + (h ? hapsyo : haeyo));
-    r = r.replace(re2, (_m, pre: string) => pre + (h ? hapsyo : haeyo));
+  // ── 하다 계열 특수 처리 ──
+  if (stem.endsWith("하")) {
+    return stem.slice(0, -1) + "해";  // 강하 + 아 → 강해, 잘하 + 아 → 잘해
   }
 
-  // ~ㄴ다 (무받침 동사: 간다, 본다 → 갑니다/가요, 봅니다/봐요)
-  r = r.replace(/([가-힣]+)ㄴ다(?=[\s.!?]|$)/g, (_m, stem: string) => {
-    if (h) {
-      const last = stem[stem.length - 1];
-      if (last.endsWith("ㄹ")) return stem.slice(0, -1) + "ㅂ니다";
-      return hasJong(last) ? stem + "습니다" : stem.slice(0, -1) + "ㅂ니다";
-    }
-    return stem + "요";
-  });
-  r = r.replace(/(^|[\s.!?])([가-힣])ㄴ다(?=[\s.!?]|$)/g, (_m, pre: string, ch: string) => {
-    if (h) {
-      if (ch.endsWith("ㄹ")) return pre + ch.slice(0, -1) + "ㅂ니다";
-      return hasJong(ch) ? pre + ch + "습니다" : pre + ch.slice(0, -1) + "ㅂ니다";
-    }
-    return pre + ch + "요";
-  });
+  const special: Record<string, string> = {
+    가: "가", 오: "와", 보: "봐", 주: "줘", 되: "돼",  // 단독 동사
+  };
+  if (special[stem]) return special[stem];
 
-  // ~이다 (명사) → 입니다 / 예요 / 이에요
-  r = r.replace(/([가-힣]+)이다(?=[\s.!?]|$)/g, (_m, stem: string) => {
-    if (h) return stem + "입니다";
-    return hasJong(stem[stem.length - 1]) ? stem + "이에요" : stem + "예요";
-  });
-  r = r.replace(/(^|[\s.!?])이다(?=[\s.!?]|$)/g, (_m, pre: string) => pre + (h ? "입니다" : "예요"));
+  const last = stem[stem.length - 1];
+  const ao = pickAeo(last);
 
-  // ── 해체 → 변환 ──
+  // 무받침만 축약
+  if (getJong(last) > 0) return stem + ao;
 
-  r = r.replace(/갔어(?=[\s.!?]|$)/g, () => h ? "갔습니다" : "갔어요");
-  r = r.replace(/했어(?=[\s.!?]|$)/g, () => h ? "했습니다" : "했어요");
-  r = r.replace(/였어(?=[\s.!?]|$)/g, () => h ? "였습니다" : "였어요");
-  r = r.replace(/해줘(?=[\s.!?]|$)/g, () => h ? "해주십시오" : "해줘요");
-  r = r.replace(/해봐(?=[\s.!?]|$)/g, () => h ? "해보십시오" : "해봐요");
-  r = r.replace(/([가-힣]+ㄹ게)(?=[\s.!?]|$)/g, (_, w: string) => w + "요");
-  r = r.replace(/([가-힣]+ㄹ까)\?/g, (_, w: string) => w + "요?");
-  r = r.replace(/([가-힣]+)니\?/g, (_, w: string) => h ? w + "니까?" : w + "나요?");
-  r = r.replace(/(^|[\s.!?])([가-힣]+)야(?=[\s.!?]|$)/g, (_m, pre: string, w: string) => {
-function isEoAEnding(ch: string): boolean {
-  // 마지막 음절이 어/아 계열 모음 + 무받침 → ~어야/~아야 패턴으로 판단
-  const c = ch.charCodeAt(0);
-  if (c < 0xac00 || c > 0xd7af) return false;
-  const base = c - 0xac00;
-  const jong = base % 28;
-  if (jong !== 0) return false; // 받침 있으면 제외
-  const vowel = ((base - jong) / 28) % 21;
-  // 어-family: ㅓ(2),ㅕ(3),ㅔ(6),ㅖ(7),ㅝ(14)
-  // 아-family: ㅏ(0),ㅑ(1),ㅐ(4),ㅒ(5),ㅘ(12)
-  return [0,1,4,5,9,10,2,3,6,7,14].includes(vowel);
+  const d = decompose(last);
+  if (!d) return stem + ao;
+  const sj = d.jung;
+  const tj = ao === "아" ? 0 : 4;
+
+  if (sj === tj) return stem;                               // 가+아 → 가
+  if (sj === 8 && tj === 0) return stem.slice(0,-1)+compose(d.cho,9,0);   // ㅗ+ㅏ→ㅘ
+  if (sj === 13 && tj === 4) return stem.slice(0,-1)+compose(d.cho,14,0); // ㅜ+ㅓ→ㅝ
+  if (sj === 18 && tj === 4) return stem.slice(0,-1)+compose(d.cho,4,0);  // ㅡ+ㅓ→ㅓ
+  if (sj === 20 && tj === 4) return stem.slice(0,-1)+compose(d.cho,6,0);  // ㅣ+ㅓ→ㅕ
+
+  return stem + ao;
 }
 
-    // 보호: ~어야, ~아야 (의무/조건 연결어미) → 변환하지 않음
-    if (isEoAEnding(w[w.length-1])) return _m;
-    if (h) return pre + w + "입니다";
-    return pre + (hasJong(w[w.length - 1]) ? w + "이에요" : w + "예요");
-  });
-  r = r.replace(/([가-힣]+)(지)(?=[\s.!?]|$)(?!\s*않)/g, (_m, w: string) => {
-    // 보호: 명사·입자 (어미가 아닌 지)
-    const nounSuffixes = /(가지|나머지|까지|마저|뿐이지|터이지|듯이지|모양이지|경우지|입장이지|결과지|원인지)$/;
-    if (nounSuffixes.test(_m.trim())) return _m;
-    return h ? w + "지 않습니다" : w + "지요";
-  });
-  r = r.replace(/([가-힣]+)(네)(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "습니다" : w + "네요");
-  r = r.replace(/([가-힣]+)(군)(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "습니다" : w + "군요");
-  r = r.replace(/([가-힣]+[ㄴ])대(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "답니다" : w + "대요");
-  r = r.replace(/([가-힣]*)하자(?=[\s.!?]|$)/g, (_, w: string) => h ? w + "합시다" : w + "해요");
+// ── 합쇼체: 어근 + 습니다 ──
+function hapsyo(stem: string): string {
+  const irr: Record<string, string> = {
+    하: "합", 오: "옵", 보: "봅", 주: "줍", 되: "됩", 가: "갑",
+    살: "삽", 알: "압", 만들: "만듭",
+  };
+  if (irr[stem]) return irr[stem] + "니다";
 
-  return r;
+  // 하다 계열 (강하다 → 강합니다)
+  if (stem.endsWith("하")) {
+    return stem.slice(0, -1) + "합니다";
+  }
+
+  const last = stem[stem.length - 1];
+  const j = getJong(last);
+  if (j <= 0 || j === 8) { // 무받침 or ㄹ
+    const d = decompose(last);
+    if (!d) return stem + "습니다";
+    return stem.slice(0, -1) + compose(d.cho, d.jung, 17) + "니다";
+  }
+  return stem + "습니다";
+}
+
+// ── 과거형 사전 ──
+const PAST: Record<string, string> = {
+  하: "했", 보: "봤", 오: "왔", 주: "줬", 되: "됐", 가: "갔",
+  고르: "골랐", 다르: "달랐", 모르: "몰랐", 부르: "불렀", 마르: "말랐",
+  오르: "올랐", 서두르: "서둘렀",
+  걷: "걸었", 듣: "들었", 묻: "물었",
+  아름답: "아름다웠", 춥: "추웠", 덥: "더웠", 쉽: "쉬웠", 맵: "매웠", 돕: "도왔", 곱: "고왔",
+  낫: "나았", 짓: "지었",
+  뛰: "뛰었", 웃: "웃었", 울: "울었", 먹: "먹었", 찾: "찾았", 만지: "만졌",
+};
+
+function past(stem: string, ep: string): string {
+  if ((ep === "았" || ep === "었") && PAST[stem]) return PAST[stem];
+  // 하다 계열 합성동사: 변하다→변했, 참하다→참했
+  if ((ep === "았" || ep === "었") && stem.endsWith("하")) {
+    return stem.slice(0, -1) + "했";
+  }
+  return stem + ep;
+}
+
+// ── 어절 분해 ──
+function splitVerb(ts: GToken[]): { prefix: string; stem: string; ep: string; ef: string; trailing: string; hasAux: boolean; auxStem: string } {
+  const allowed = new Set(["VV", "VA", "VX"]);
+  const vi = ts.findIndex(t => allowed.has(t.pos));
+  if (vi < 0) return { prefix: "", stem: "", ep: "", ef: "", trailing: "", hasAux: false, auxStem: "" };
+
+  const stem = ts[vi].text;
+  const after = ts.slice(vi + 1);
+  const efi = after.findIndex(t => t.pos === "EF");
+
+  if (efi < 0) {
+    return {
+      prefix: ts.slice(0, vi).map(t =>t.text).join(""),
+      stem,
+      ep: after.filter(t=> t.pos !== "SF").map(t=>t.text).join(""),
+      ef: "",
+      trailing: after.filter(t=> t.pos === "SF").map(t=>t.text).join(""),
+      hasAux: false, auxStem: "",
+    };
+  }
+
+  const epTokens = after.slice(0, efi);
+  const hasAux = epTokens.some(t=> t.pos === "VX");
+  const auxStem = epTokens.find(t=> t.pos === "VX")?.text ?? "";
+
+  return {
+    prefix: ts.slice(0, vi).map(t=>t.text).join(""),
+    stem,
+    ep: epTokens.map(t=>t.text).join(""),
+    ef: after[efi].text,
+    trailing: after.slice(efi + 1).map(t=>t.text).join(""),
+    hasAux, auxStem,
+  };
+}
+
+// ── 핵심 변환 ──
+function convert(ts: GToken[], level: HonorificLevel): string | null {
+  const h = level === "hapsyo";
+
+  // 이다
+  const vcpI = ts.findIndex(t => t.pos === "VCP");
+  if (vcpI >= 0) {
+    const after = ts.slice(vcpI + 1);
+    const ef = after.find(t => t.pos === "EF");
+    if (ef && ["다","야","아"].includes(ef.text)) {
+      const b = ts.slice(0, vcpI).map(t=>t.text).join("");
+      const lc = b[b.length - 1] || "";
+      const body = h ? b + "입니다" : getJong(lc) > 0 ? b + "이에요" : b + "예요";
+      return body + after.filter(t=> t.pos !== "EF").map(t=>t.text).join("");
+    }
+  }
+
+  // 아니다 (VCN)
+  const vcnI = ts.findIndex(t => t.pos === "VCN");
+  if (vcnI >= 0) {
+    const afterVCN = ts.slice(vcnI + 1);
+    const hasEF = afterVCN.some(t => t.pos === "EF");
+    const hasSP = afterVCN.some(t => t.pos === "SP");
+    const nextPos = afterVCN[0]?.pos;
+
+    // VCN 뒤에 EF(종결어미)만 오는 경우에만 변환
+    // EC(연결어미), ETM(관형어미) 등이 오면 관형/연결 문법 → 원문 보존
+    if (!hasEF) return null;
+
+    const b = ts.slice(0, vcnI).map(t=>t.text).join("");
+    const tr = afterVCN.filter(t => !["EF","EC","ETM"].includes(t.pos)).map(t=>t.text).join("");
+    return (h ? b + "아닙니다" : b + "아니에요") + tr;
+  }
+
+  const p = splitVerb(ts);
+  if (!p.stem || !p.ef) return null;
+
+  const { stem, ep, ef, prefix, trailing, hasAux, auxStem } = p;
+  const hasPast = ep.includes("았") || ep.includes("었") || ep.includes("겠");
+
+  switch (ef) {
+    case "다":
+    case "ㄴ다":
+    case "는다": {
+      if (hasPast) return prefix + past(stem, ep) + (h ? "습니다" : "어요") + trailing;
+      return prefix + (h ? hapsyo(stem) : contract(stem) + "요") + trailing;
+    }
+
+    case "어":
+    case "아": {
+      // 해봐(명령) → 해보십시오
+      if (stem === "해보" && h) return prefix + stem + "십시오" + trailing;
+      if (hasPast) return prefix + past(stem, ep) + (h ? "습니다" : "어요") + trailing;
+
+      if (hasAux) {
+        // 보조동사 처리: 해줘, 해봐, 가봐 등
+        if (h) {
+          if (auxStem === "주") return prefix + contract(stem) + "주십시오" + trailing;
+          if (auxStem === "보") return prefix + contract(stem) + "보십시오" + trailing;
+          return prefix + contract(stem) + hapsyo(auxStem) + trailing;
+        }
+        // 해요체: 해줘 → 해줘요
+        const cs = contract(stem);
+        if (auxStem === "주") return prefix + cs + "줘요" + trailing;
+        if (auxStem === "보") {
+          // 해보아 → 해봐요
+          const merged = cs + "보";
+          return prefix + contract(merged) + "요" + trailing;
+        }
+        return prefix + cs + contract(auxStem) + "요" + trailing;
+      }
+
+      return prefix + (h ? hapsyo(stem) : contract(stem) + "요") + trailing;
+    }
+
+    case "자": {
+      if (h) {
+        const special: Record<string, string> = {
+          가: "갑시다", 하: "합시다", 오: "옵시다", 보: "봅시다", 주: "줍시다",
+        };
+        if (special[stem]) return prefix + special[stem] + trailing;
+        return prefix + hapsyo(stem).replace(/니다$/, "시다") + trailing;
+      }
+      return prefix + contract(stem) + "요" + trailing;
+    }
+
+    case "아라":
+    case "어라": {
+      // 명령: 해라 → 하세요, 봐라 → 보세요
+      return h ? prefix + stem + "십시오" + trailing : prefix + stem + "세요" + trailing;
+    }
+
+    case "니":   return prefix + stem + (h ? "니까" : "나요") + trailing;
+
+    case "ㄹ까": {
+      if (stem === "하") return prefix + "할까요" + trailing;
+      const l = stem[stem.length - 1];
+      const d = decompose(l);
+      if (d && d.jong === 0) {
+        // 무받침에 ㄹ 붙이기: 가→갈, 오→올
+        return prefix + stem.slice(0, -1) + compose(d.cho, d.jung, 8) + "까요" + trailing;
+      }
+      return prefix + stem + "ㄹ까요" + trailing;
+    }
+
+    case "ㄹ게":
+    case "을게": {
+      if (h) return prefix + stem + "겠습니다" + trailing;
+      if (ef === "을게") return prefix + stem + "을게요" + trailing; // 받침 동사
+      // 무받침 + ㄹ게: 가→갈, 오→올
+      const l = stem.slice(-1);
+      const d = decompose(l);
+      if (d && d.jong === 0) {
+        const combined = compose(d.cho, d.jung, 8); // 8=ㄹ
+        return prefix + stem.slice(0, -1) + combined + "게요" + trailing;
+      }
+      return prefix + stem + "ㄹ게요" + trailing;
+    }
+
+    case "군":   return hasPast ? prefix + past(stem, ep) + (h ? "습니다" : "군요") + trailing : prefix + stem + (h ? "습니다" : "군요") + trailing;
+    case "네":   return hasPast ? prefix + past(stem, ep) + (h ? "습니다" : "네요") + trailing : prefix + stem + (h ? "습니다" : "네요") + trailing;
+    case "지":   return hasPast ? prefix + past(stem, ep) + (h ? "지 않습니다" : "지요") + trailing : prefix + stem + (h ? "지 않습니다" : "지요") + trailing;
+
+    default:
+      return null;
+  }
+}
+
+// ── Garu 관리 ──
+let _garu: any = null;
+let _garuPromise: Promise<any> | null = null;
+
+async function ensureGaru() {
+  if (_garu) return _garu;
+  if (!_garuPromise) {
+    const { Garu } = await import("garu-ko");
+    _garuPromise = Garu.load();
+  }
+  _garu = await _garuPromise;
+  return _garu;
+}
+
+export function setGaruInstance(instance: any) { _garu = instance; }
+
+function tok(s: any): GToken[] {
+  return s.tokens.map((t: any) => ({
+    text: t.text, pos: t.pos, start: t.start ?? 0, end: t.end ?? 0,
+  }));
+}
+
+function group(ts: GToken[]): GToken[][] {
+  const gs: GToken[][] = [];
+  let cur: GToken[] = [];
+  let cs = -1, ce = -1;
+  for (const t of ts) {
+    if (cur.length === 0) { cur = [t]; cs = t.start; ce = t.end; }
+    else if (t.start === cs && t.end === ce) cur.push(t);
+    else { gs.push(cur); cur = [t]; cs = t.start; ce = t.end; }
+  }
+  if (cur.length) gs.push(cur);
+  return gs;
+}
+
+function convertSentence(text: string, level: HonorificLevel): string {
+  const ts = tok(_garu.analyze(text));
+  const ejs = group(ts);
+
+  let result = "";
+  let pos = 0;
+
+  for (const ej of ejs) {
+    const s = ej[0].start;
+    const e = ej[ej.length - 1].end;
+
+    while (pos < s && pos < text.length) result += text[pos++];
+
+    const c = convert(ej, level);
+    result += c !== null ? c : text.substring(s, e);
+    pos = e;
+  }
+
+  while (pos < text.length) result += text[pos++];
+  return result;
+}
+
+export async function toHonorific(text: string, level: HonorificLevel): Promise<string> {
+  _garu = await ensureGaru();
+  return convertSentence(text, level);
+}
+
+export function toHonorificSync(text: string, level: HonorificLevel): string {
+  if (!_garu) throw new Error("Garu not initialized");
+  return convertSentence(text, level);
 }

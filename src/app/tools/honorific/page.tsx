@@ -78,22 +78,37 @@ export default function HonorificPage() {
   const [output, setOutput] = useState("");
   const [level, setLevel] = useState<HonorificLevel>("haeyo");
   const [diffResult, setDiffResult] = useState<{ text: string; changed: boolean }[]>([]);
+  const [ready, setReady] = useState(false);
 
   // Sync scroll refs
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const syncing = useRef(false);
 
-  const handleConvert = useCallback(() => {
-    const out = toHonorific(input, level);
-    setOutput(out);
-    setDiffResult(diffTokens(tokenize(input), tokenize(out)));
+  // Garu lazy warm-up
+  useEffect(() => {
+    toHonorific("안녕하세요", "haeyo")
+      .then(() => setReady(true))
+      .catch(() => setOutput("형태소 분석기 초기화 중..."));
+  }, []);
+
+  const handleConvert = useCallback(async () => {
+    if (!input.trim()) { setOutput(""); setDiffResult([]); return; }
+    try {
+      const out = await toHonorific(input, level);
+      setOutput(out);
+      setDiffResult(diffTokens(tokenize(input), tokenize(out)));
+    } catch (e: any) {
+      setOutput("변환 오류: " + String(e));
+      setDiffResult([]);
+    }
   }, [input, level]);
 
-  // Auto-convert on level change
+  // Auto-convert on input/level change
   useEffect(() => {
-    if (input.trim()) handleConvert();
-  }, [level]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!ready) return;
+    handleConvert();
+  }, [level, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync scroll: input → output
   const onInputScroll = useCallback(() => {
