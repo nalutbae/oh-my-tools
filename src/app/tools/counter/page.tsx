@@ -1,11 +1,107 @@
-export default function PlaceholderPage() {
+"use client";
+
+import { useState } from "react";
+
+interface Stats {
+  totalChars: number;
+  charsNoSpace: number;
+  bytes: number;
+  lines: number;
+  words: number;
+}
+
+function computeStats(text: string): Stats {
+  const totalChars = text.length;
+  const charsNoSpace = text.replace(/\s/g, "").length;
+  const bytes = new TextEncoder().encode(text).length;
+  const lines = text === "" ? 0 : text.split(/\r?\n/).length;
+  const words = (text.match(/[가-힣]+|[a-zA-Z]+|[0-9]+/g) || []).length;
+  return { totalChars, charsNoSpace, bytes, lines, words };
+}
+
+function StatCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: "blue" | "green" | "purple" | "orange" | "pink";
+}) {
+  const colorMap = {
+    blue: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-100" },
+    green: { bg: "bg-green-50", text: "text-green-700", border: "border-green-100" },
+    purple: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-100" },
+    orange: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-100" },
+    pink: { bg: "bg-pink-50", text: "text-pink-700", border: "border-pink-100" },
+  };
+  const c = colorMap[color];
+
+  return (
+    <div className={`${c.bg} ${c.border} border rounded-xl p-4 text-center transition-transform hover:scale-[1.02]`}>
+      <div className={`text-3xl font-bold ${c.text} tabular-nums`}>{value.toLocaleString()}</div>
+      <div className="text-xs text-gray-500 mt-1 font-medium">{label}</div>
+    </div>
+  );
+}
+
+export default function CounterPage() {
+  const [text, setText] = useState("");
+  const stats = computeStats(text);
+
+  const copyText = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const clearText = () => setText("");
+
   return (
     <div className="max-w-4xl mx-auto px-8 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">🔢 글자수 체크</h1>
-      <p className="text-sm text-gray-500 mb-6">텍스트 길이, 단어 수, 바이트 수를 확인합니다</p>
-      <div className="p-12 border-2 border-dashed border-gray-200 rounded-xl text-center">
-        <p className="text-gray-400 text-lg">🚧 준비 중입니다</p>
-        <p className="text-gray-300 text-sm mt-1">곧 멋진 기능으로 찾아뵙겠습니다</p>
+      <p className="text-sm text-gray-500 mb-6">
+        텍스트 길이, 단어 수, 바이트 수를 실시간으로 확인합니다
+      </p>
+
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        <StatCard label="전체 글자수" value={stats.totalChars} color="blue" />
+        <StatCard label="공백 제외 글자수" value={stats.charsNoSpace} color="green" />
+        <StatCard label="UTF-8 바이트" value={stats.bytes} color="purple" />
+        <StatCard label="줄 수" value={stats.lines} color="orange" />
+        <StatCard label="단어 수" value={stats.words} color="pink" />
+      </div>
+
+      {/* 입력 영역 */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-700">📝 텍스트 입력</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={copyText}
+              disabled={!text}
+              className="text-xs text-gray-400 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50 transition-colors disabled:opacity-40"
+            >
+              📋 복사
+            </button>
+            <button
+              onClick={clearText}
+              disabled={!text}
+              className="text-xs text-gray-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors disabled:opacity-40"
+            >
+              🗑️ 지우기
+            </button>
+          </div>
+        </div>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="텍스트를 입력하세요..."
+          className="w-full min-h-[320px] px-3.5 py-3 bg-white text-gray-800 text-sm focus:outline-none resize-y"
+        />
       </div>
     </div>
   );
