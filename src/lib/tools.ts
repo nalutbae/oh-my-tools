@@ -36,6 +36,13 @@ export const tools: Tool[] = [
     href: "/tools/regex",
   },
   {
+    id: "encoding",
+    name: "인코딩 / 디코딩",
+    description: "URL, Base64, HTML 등 변환",
+    icon: "🔐",
+    href: "/tools/encoding",
+  },
+  {
     id: "image",
     name: "이미지 리사이즈",
     description: "크기·포맷 변환",
