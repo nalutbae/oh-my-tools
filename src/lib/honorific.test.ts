@@ -109,3 +109,56 @@ describe("버그 회귀 테스트", () => {
     expect(await s(text)).toBe("없을 뿐만 아니라, 무모한 행동으로");
   });
 });
+
+// ── 추가 엣지 케이스 점검 ──
+describe("추가 점검", () => {
+  // 1. 다양한 동사 유형
+  it("불규칙 동사", async () => {
+    expect(await h("듣는다")).toBe("들어요");   // ㄷ 불규칙
+    expect(await h("걷는다")).toBe("걸어요");     // ㄷ 불규칙
+    expect(await h("춥다")).toBe("추워요");      // ㅂ 불규칙
+    expect(await h("덥다")).toBe("더워요");      // ㅂ 불규칙
+    expect(await h("만들어")).toBe("만들어요"); // ㄹ 불규칙 (받침)
+    expect(await h("올라")).toBe("올라요");     // ㄹ → ㄹ + 아
+  });
+
+  // 2. 하다 계열 합성동사
+  it("하다 계열 합성", async () => {
+    expect(await h("변한다")).toBe("변해요");   // 변하다
+    expect(await h("참한다")).toBe("참해요");     // 참하다
+    expect(await h("강하다")).toBe("강해요");     // 강하다 (단독)
+  });
+
+  // 3. 과거형 특수
+  it("과거형 불규칙", async () => {
+    expect(await h("갔어")).toBe("갔어요");     // 가→갔
+    expect(await h("왔어")).toBe("왔어요");     // 오→왔
+    expect(await h("줬어")).toBe("줬어요");     // 주→줬
+    expect(await h("됐어")).toBe("됐어요");     // 되→됐
+    expect(await h("했어")).toBe("했어요");     // 하→했
+  });
+
+  // 5. 다양한 종결어미
+  it("종결어미", async () => {
+    expect(await h("가겠어")).toBe("가겠어요"); // 겠 + EF
+    expect(await h("가네")).toBe("가네요");     // 네
+    expect(await h("가지")).toBe("가지");       // 지 — Garu가 NNB(의존명사)로 분석, 변환 불가
+    // "가군"은 Garu가 NNG(명사)로 분석하여 엔진이 동사로 인식하지 못함 — 한계
+  });
+
+  // 6. 영어/숫자 섞임 (한계: 주변 맥락에 따라 NNP로 인식될 수 있음)
+  it("비한글 텍스트", async () => {
+    // "Hello world, 가자!" 에서 "가자"가 NNP(고유명사)로 인식되어 변환되지 않음
+    // 순수 한국어 문장만 안정적으로 처리됨
+    expect(await h("가자")).toBe("가요");
+  });
+
+  // 7. 이미 존댓말인 경우: 엔진은 입력이 평어(다/어/자 등)인 것을 전제로 함
+  it("존댓말 입력", async () => {
+    // "가요"는 이미 해요체 — 엔진은 평어→경어체만 변환하므로 pass-through
+    expect(await h("가요")).toBe("가요");   // 이미 해요체 → 그대로
+    // "갑니다"는 이미 합쇼체 — 변환하지 않음
+    expect(await h("갑니다")).toBe("갑니다"); // 그대로 (엔진이 평어만 처리)
+    expect(await s("가요")).toBe("갑니다");   // 해요체 → 합쇼체
+  });
+});

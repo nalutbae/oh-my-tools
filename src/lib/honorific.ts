@@ -48,6 +48,38 @@ function contract(stem: string): string {
   const last = stem[stem.length - 1];
   const ao = pickAeo(last);
 
+  // ── ㄷ/ㅂ/ㅅ/ㄹ 불규칙 활용 ──
+  const dLast = decompose(last);
+  if (dLast) {
+    // ㄷ 불규칙: 걷/듣/묻 → 걸/들/물
+    if (dLast.jong === 7) { // ㄷ (자모 7번)
+      const newLast = compose(dLast.cho, dLast.jung, 0); // 받침 제거
+      if (stem === "듣") return "들" + ao;
+      if (stem === "걷") return "걸" + ao;
+      if (stem === "묻") return "물" + ao;
+    }
+    // ㅂ 불규칙: 춥/덥/쉽/맵/돕/곱 → 추워/더워/쉬워/매워/도와/고와
+    if (dLast.jong === 17) { // ㅂ (자모 17번)
+      const base = stem.slice(0, -1) + compose(dLast.cho, dLast.jung, 0); // ㅂ 제거한 어근
+      // ㅗ→와, ㅜ→워, 기타→워 (우+어→워 축약)
+      if (dLast.jung === 8) return base + "와";   // ㅗ: 돕→도와, 곱→고와
+      return base + "워";                          // ㅜ/기타: 춥→추워, 덥→더워, 쉽→쉬워
+    }
+    // ㅅ 불규칙: 짓/낫 → 지/나
+    if (dLast.jong === 19) { // ㅅ (자모 19번)
+      if (stem === "짓") return "지" + ao;
+      if (stem === "낫") return "나아"; // 낫다→나아
+    }
+    // ㄹ 불규칙 (받침 있는 ㄹ 동사): 오르/다르/모르/부르/마르/고르
+    // 주의: '르' 자체는 jong=0(무받침)이므로 종성 체크가 아닌 어근 매칭으로 처리
+    const rIrregular: Record<string, string> = {
+      "오르": "올라", "다르": "달라", "모르": "몰라",
+      "부르": "불러", "마르": "말라", "고르": "골라",
+      "서두르": "서둘러",
+    };
+    if (rIrregular[stem]) return rIrregular[stem];
+  }
+
   // 무받침만 축약
   if (getJong(last) > 0) return stem + ao;
 
@@ -265,6 +297,16 @@ function convert(ts: GToken[], level: HonorificLevel): string | null {
     case "군":   return hasPast ? prefix + past(stem, ep) + (h ? "습니다" : "군요") + trailing : prefix + stem + (h ? "습니다" : "군요") + trailing;
     case "네":   return hasPast ? prefix + past(stem, ep) + (h ? "습니다" : "네요") + trailing : prefix + stem + (h ? "습니다" : "네요") + trailing;
     case "지":   return hasPast ? prefix + past(stem, ep) + (h ? "지 않습니다" : "지요") + trailing : prefix + stem + (h ? "지 않습니다" : "지요") + trailing;
+
+    // 이미 해요체인 입력: 아요 → 해요체 유지 or 합쇼체로 변경
+    case "아요":
+    case "어요": {
+      if (h) {
+        // 해요체 → 합쇼체: 가요 → 갑니다
+        return prefix + hapsyo(stem) + trailing;
+      }
+      return prefix + contract(stem) + "요" + trailing; // 그대로 해요체
+    }
 
     default:
       return null;
