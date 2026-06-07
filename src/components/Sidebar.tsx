@@ -8,7 +8,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <aside className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col shrink-0">
       {/* Logo */}
       <div className="p-5 border-b border-gray-100">
         <Link href="/" className="flex items-center gap-2">

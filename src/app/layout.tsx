@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
   title: "oh-my-tool — 스위스아미나이프",
@@ -10,9 +11,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="flex h-screen bg-gray-50">
+      <body className="flex flex-col lg:flex-row h-screen bg-gray-50">
         <Sidebar />
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto pb-16 lg:pb-0">{children}</main>
+        <MobileNav />
       </body>
     </html>
   );
