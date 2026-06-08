@@ -60,10 +60,10 @@ export default function ImageResizePage() {
           onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           onClick={() => fileRef.current?.click()}
           className={`cursor-pointer rounded-xl border-2 border-dashed p-8 sm:p-12 text-center transition-colors ${
-            dragOver ? "border-blue-400 bg-blue-50" : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"}`}>
+            dragOver ? "border-blue-400 bg-blue-50" : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100 active:bg-gray-200"}`}>
           <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">📤</div>
           <p className="text-sm sm:text-base text-gray-600 font-medium mb-1">이미지를 드래그하거나 클릭하여 업로드</p>
-          <p className="text-[10px] sm:text-xs text-gray-400">PNG, JPG, WEBP, GIF 지원</p>
+          <p className="text-xs text-gray-400">PNG, JPG, WEBP, GIF 지원</p>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
         </div>
       )}
@@ -71,13 +71,13 @@ export default function ImageResizePage() {
       {uploaded && (<>
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4 lg:mb-6">
           <div className="flex items-center gap-3 sm:gap-4">
-            <img src={uploaded.url} alt="preview" className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border border-gray-100" />
+            <img src={uploaded.url} alt="preview" className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg border border-gray-100" />
             <div className="flex-1 min-w-0">
               <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{uploaded.name}</p>
-              <p className="text-[10px] sm:text-xs text-gray-500">원본: {uploaded.originalW} × {uploaded.originalH} px · {(uploaded.file.size / 1024).toFixed(1)} KB</p>
+              <p className="text-xs text-gray-500">원본: {uploaded.originalW} × {uploaded.originalH} px · {(uploaded.file.size / 1024).toFixed(1)} KB</p>
             </div>
             <button onClick={() => { setUploaded(null); setResultUrl(""); setSelectedPreset(null); setCustomW(""); setCustomH(""); }}
-              className="text-[10px] sm:text-xs text-gray-400 hover:text-red-600 px-1.5 sm:px-2 py-1 rounded hover:bg-red-50 transition-colors">🗑️ 삭제</button>
+              className="text-xs text-gray-400 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 active:bg-red-100 transition-colors">🗑️ 삭제</button>
           </div>
         </div>
 
@@ -86,8 +86,8 @@ export default function ImageResizePage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
             {imagePresets.map((preset) => (
               <button key={preset.label} onClick={async () => { if (!uploaded) return; setSelectedPreset(preset); setCustomW(String(preset.w)); setCustomH(String(preset.h)); await processResize(uploaded, preset.w, preset.h); }}
-                className={`text-left px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg border text-[10px] sm:text-xs transition-colors ${
-                  selectedPreset?.label === preset.label ? "border-blue-400 bg-blue-50 text-blue-700" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"}`}>
+                className={`text-left px-2 sm:px-3 py-2.5 rounded-lg border text-xs sm:text-sm transition-colors ${
+                  selectedPreset?.label === preset.label ? "border-blue-400 bg-blue-50 text-blue-700" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 text-gray-700"}`}>
                 <div className="font-semibold">{preset.label}</div>
                 <div className="text-gray-400 mt-0.5">{preset.w} × {preset.h} {preset.desc && `· ${preset.desc}`}</div>
               </button>
@@ -95,18 +95,18 @@ export default function ImageResizePage() {
           </div>
           <div className="flex items-end gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-gray-100">
             <div className="flex-1">
-              <label className="block text-[10px] sm:text-xs text-gray-500 mb-1">가로 (px)</label>
+              <label className="block text-xs text-gray-500 mb-1">가로 (px)</label>
               <input type="number" min={1} value={customW} onChange={(e) => { setCustomW(e.target.value); setSelectedPreset(null); }}
-                placeholder="가로" className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+                placeholder="가로" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
             </div>
             <div className="flex-1">
-              <label className="block text-[10px] sm:text-xs text-gray-500 mb-1">세로 (px)</label>
+              <label className="block text-xs text-gray-500 mb-1">세로 (px)</label>
               <input type="number" min={1} value={customH} onChange={(e) => { setCustomH(e.target.value); setSelectedPreset(null); }}
-                placeholder="세로" className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+                placeholder="세로" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
             </div>
             <button onClick={async () => { if (!uploaded) return; const w = parseInt(customW, 10); const h = parseInt(customH, 10); if (!w || !h || w <= 0 || h <= 0) return; setSelectedPreset(null); await processResize(uploaded, w, h); }}
               disabled={!customW || !customH || processing}
-              className="px-3 sm:px-5 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors">
+              className="px-3 sm:px-5 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 transition-colors">
               {processing ? "처리 중..." : "리사이즈"}
             </button>
           </div>
@@ -114,10 +114,10 @@ export default function ImageResizePage() {
 
         {resultUrl && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+            <div className="px-3 sm:px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
               <span className="text-xs sm:text-sm font-semibold text-gray-700">✅ 결과</span>
               <button onClick={download}
-                className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors font-medium">💾 다운로드</button>
+                className="text-xs text-blue-600 hover:text-blue-700 px-2 sm:px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-colors font-medium">💾 다운로드</button>
             </div>
             <div className="p-3 sm:p-4 flex justify-center bg-gray-100">
               <img src={resultUrl} alt="result" className="max-w-full rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: "300px" }} />

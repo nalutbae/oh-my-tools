@@ -69,21 +69,21 @@ export default function DeclarativePage() {
 
       <div className="mb-4 flex gap-2">
         <button onClick={handleConvert} disabled={!input.trim()}
-          className="px-3 sm:px-5 py-2 bg-emerald-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">변환하기 →</button>
+          className="px-4 sm:px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">변환하기 →</button>
       </div>
 
-      <div className="flex flex-col lg:grid lg:grid-cols-2 gap-3 lg:gap-4">
+      <div className="flex flex-col md:grid md:grid-cols-2 gap-3 md:gap-4">
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1.5">📥 입력 텍스트 (존댓말)</label>
           <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onScroll={onInputScroll}
             placeholder="존댓말 텍스트를 입력하세요."
-            className="w-full h-56 sm:h-64 p-3 sm:p-4 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent" />
-          <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-gray-400">{input.length}자</div>
+            className="w-full h-56 sm:h-64 p-3 sm:p-4 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
+          <div className="mt-1.5 sm:mt-2 text-xs text-gray-400">{input.length}자</div>
         </div>
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1.5">📤 변환 결과 (평어체)</label>
           <div ref={outputRef} onScroll={onOutputScroll}
-            className="w-full h-56 sm:h-64 p-3 sm:p-4 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium bg-gray-50 overflow-auto">
+            className="w-full h-56 sm:h-64 p-3 sm:p-4 border border-gray-200 rounded-xl text-sm bg-gray-50 overflow-auto">
             {diffResult.length === 0 ? (<span className="text-gray-350">변환 결과가 여기에 표시됩니다</span>) : (
               <span className="leading-relaxed whitespace-pre-wrap">
                 {diffResult.map((t, i) => t.changed ? (<mark key={i} className="bg-emerald-200 text-emerald-900 px-0.5 rounded">{t.text}</mark>) : (<span key={i}>{t.text}</span>))}
@@ -91,16 +91,16 @@ export default function DeclarativePage() {
             )}
           </div>
           <div className="mt-1.5 sm:mt-2 flex items-center justify-between">
-            <span className="text-[10px] sm:text-xs text-gray-400">{output.length}자</span>
+            <span className="text-xs text-gray-400">{output.length}자</span>
             <button onClick={() => { if (output) navigator.clipboard.writeText(output); }} disabled={!output}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-200 bg-white rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">📋 복사</button>
+              className="px-3 sm:px-4 py-2 border border-gray-200 bg-white rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 transition-colors">📋 복사</button>
           </div>
         </div>
       </div>
 
       <div className="mt-6 lg:mt-8 p-3 sm:p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
         <h3 className="text-xs sm:text-sm font-semibold text-emerald-800 mb-1.5 sm:mb-2">💡 알아두세요</h3>
-        <ul className="text-[10px] sm:text-xs text-emerald-700 space-y-1 list-disc list-inside">
+        <ul className="text-xs text-emerald-700 space-y-1 list-disc list-inside">
           <li>존댓말(합니다/해요)을 평어체(~는다/~다)로 변환합니다.</li>
           <li>대명사도 함께 바뀝니다: 저→나, 저희→우리.</li>
           <li><mark className="bg-emerald-200 px-0.5 rounded">초록색 강조</mark>는 원문과 달라진 부분입니다.</li>

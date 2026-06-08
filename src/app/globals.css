@@ -4,4 +4,38 @@
   body {
     @apply antialiased;
   }
+
+  /* 최소 터치 타겟 44px (Apple HIG) */
+  button, a, select, input[type="button"], input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 인라인 텍스트 버튼은 예외 */
+  .touch-auto button,
+  .touch-auto a {
+    min-height: auto;
+    min-width: auto;
+  }
+
+  /* 모바일에서 폰트 크기 하한선 */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+@layer utilities {
+  /* Safe area 패딩 — iPhone 노치/홈 인디케이터 대응 */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .px-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
 }

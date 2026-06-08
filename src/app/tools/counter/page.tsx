@@ -38,9 +38,9 @@ function StatCard({
   const c = colorMap[color];
 
   return (
-    <div className={`${c.bg} ${c.border} border rounded-xl p-3 sm:p-4 text-center`}>
+    <div className={`${c.bg} ${c.border} border rounded-xl p-3 sm:p-4 text-center min-h-[80px] flex flex-col justify-center`}>
       <div className={`text-2xl sm:text-3xl font-bold ${c.text} tabular-nums`}>{value.toLocaleString()}</div>
-      <div className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium">{label}</div>
+      <div className="text-xs text-gray-500 mt-1 font-medium">{label}</div>
     </div>
   );
 }
@@ -58,7 +58,7 @@ export default function CounterPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4 lg:mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-4 lg:mb-6">
         <StatCard label="전체 글자수" value={stats.totalChars} color="blue" />
         <StatCard label="공백 제외" value={stats.charsNoSpace} color="green" />
         <StatCard label="UTF-8 바이트" value={stats.bytes} color="purple" />
@@ -67,14 +67,14 @@ export default function CounterPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-3 sm:px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
           <span className="text-xs sm:text-sm font-semibold text-gray-700">📝 텍스트 입력</span>
         </div>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="텍스트를 입력하세요..."
-          className="w-full min-h-[240px] sm:min-h-[320px] px-3 sm:px-3.5 py-2.5 sm:py-3 bg-white text-gray-800 text-sm focus:outline-none resize-y"
+          className="w-full min-h-[200px] sm:min-h-[320px] px-3 sm:px-4 py-2.5 sm:py-3 bg-white text-gray-800 text-sm focus:outline-none resize-y"
         />
       </div>
     </div>

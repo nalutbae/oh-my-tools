@@ -3,12 +3,12 @@ import { tools } from "@/lib/tools";
 
 export default function Home() {
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-      <div className="mb-8 lg:mb-10">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
+      <div className="mb-6 lg:mb-10">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
           🛠️ oh-my-tool
         </h1>
-        <p className="text-base sm:text-lg text-gray-500">
+        <p className="text-sm sm:text-lg text-gray-500">
           스위스아미나이프 — 필요한 도구를 한 곳에
         </p>
       </div>
@@ -18,13 +18,17 @@ export default function Home() {
           <Link
             key={tool.id}
             href={tool.href}
-            className="group p-4 sm:p-6 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
+            className="group flex items-center gap-3 sm:gap-4 p-4 sm:p-5 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md active:bg-blue-50 transition-all min-h-[72px] sm:min-h-[88px] touch-auto"
           >
-            <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{tool.icon}</div>
-            <h3 className="font-semibold text-gray-800 group-hover:text-indigo-700 text-sm sm:text-base">
-              {tool.name}
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">{tool.description}</p>
+            <span className="text-2xl sm:text-3xl shrink-0">{tool.icon}</span>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-800 group-hover:text-blue-700 text-sm sm:text-base">
+                {tool.name}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5 line-clamp-2">
+                {tool.description}
+              </p>
+            </div>
           </Link>
         ))}
       </div>

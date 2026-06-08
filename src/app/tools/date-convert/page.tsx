@@ -123,10 +123,10 @@ export default function DateConvertPage() {
                 setMode(m);
                 setResults([]);
               }}
-              className={`text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border text-[10px] sm:text-xs transition-colors ${
+              className={`text-left px-2 sm:px-3 py-2.5 rounded-lg border text-xs sm:text-sm transition-colors ${
                 mode === m
                   ? "border-blue-400 bg-blue-50 text-blue-700 font-semibold"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 text-gray-700"
               }`}
             >
               <div className="flex items-center gap-1">
@@ -148,11 +148,11 @@ export default function DateConvertPage() {
               type="date"
               value={isoDate}
               onChange={(e) => syncFromIso(e.target.value)}
-              className="flex-1 min-w-0 border border-gray-200 rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+              className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
             />
             <button
               onClick={setToday}
-              className="shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border text-[10px] sm:text-xs font-semibold transition-colors text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
+              className="shrink-0 px-3 sm:px-4 py-2.5 rounded-lg border text-xs sm:text-sm font-semibold transition-colors text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 active:bg-blue-200"
             >
               오늘
             </button>
@@ -160,36 +160,36 @@ export default function DateConvertPage() {
         ) : (
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <div>
-              <label className="block text-[10px] sm:text-xs text-gray-400 mb-1">년</label>
+              <label className="block text-xs text-gray-400 mb-1">년</label>
               <input
                 type="number"
                 min={1}
                 max={9999}
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value))}
-                className="w-full border border-gray-200 rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
               />
             </div>
             <div>
-              <label className="block text-[10px] sm:text-xs text-gray-400 mb-1">월</label>
+              <label className="block text-xs text-gray-400 mb-1">월</label>
               <input
                 type="number"
                 min={1}
                 max={12}
                 value={month}
                 onChange={(e) => setMonth(Number(e.target.value))}
-                className="w-full border border-gray-200 rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
               />
             </div>
             <div>
-              <label className="block text-[10px] sm:text-xs text-gray-400 mb-1">일</label>
+              <label className="block text-xs text-gray-400 mb-1">일</label>
               <input
                 type="number"
                 min={1}
                 max={31}
                 value={day}
                 onChange={(e) => setDay(Number(e.target.value))}
-                className="w-full border border-gray-200 rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
               />
             </div>
           </div>
@@ -200,15 +200,15 @@ export default function DateConvertPage() {
         <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-2.5">
           📋 출력 포맷
         </label>
-        <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 sm:gap-2">
           {outputFormats.map((f) => (
             <button
               key={f}
               onClick={() => setFormat(f)}
-              className={`text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border text-[10px] sm:text-xs transition-colors ${
+              className={`text-left px-2 sm:px-3 py-2.5 rounded-lg border text-xs sm:text-sm transition-colors ${
                 format === f
                   ? "border-blue-400 bg-blue-50 text-blue-700 font-semibold"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 text-gray-700"
               }`}
             >
               <span className="truncate">{f}</span>
@@ -220,7 +220,7 @@ export default function DateConvertPage() {
       <button
         onClick={handleConvert}
         disabled={loading}
-        className="w-full py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors mb-4 sm:mb-5"
+        className="w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 transition-colors mb-4 sm:mb-5"
       >
         {loading ? "⏳ 변환 중…" : "🔄 변환 실행"}
       </button>
@@ -236,14 +236,14 @@ export default function DateConvertPage() {
               return (
                 <div
                   key={res.type}
-                  className={`flex items-center gap-2 sm:gap-3 border rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 ${
+                  className={`flex items-center gap-2 sm:gap-3 border rounded-xl px-3 sm:px-4 py-2.5 ${
                     res.type === mode
                       ? "border-blue-200 bg-blue-50"
                       : "border-gray-200 bg-gray-50"
                   }`}
                 >
                   <span
-                    className={`shrink-0 inline-flex items-center justify-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-semibold ${
+                    className={`shrink-0 inline-flex items-center justify-center px-2 sm:px-2.5 py-1 rounded-md text-xs sm:text-sm font-semibold ${
                       res.type === mode
                         ? "bg-blue-100 text-blue-700"
                         : "bg-gray-100 text-gray-600"
@@ -251,12 +251,12 @@ export default function DateConvertPage() {
                   >
                     {res.label}
                   </span>
-                  <span className="flex-1 min-w-0 text-xs sm:text-sm text-gray-800 truncate">
+                  <span className="flex-1 min-w-0 text-sm text-gray-800 truncate">
                     {formatDate(res.year, res.month, res.day, format)}
                   </span>
                   <button
                     onClick={() => copyResult(idx, text)}
-                    className="shrink-0 text-[10px] sm:text-xs text-gray-400 hover:text-blue-600 px-1.5 sm:px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                    className="shrink-0 text-xs text-gray-400 hover:text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors"
                   >
                     {copiedIndex === idx ? "✅ 복사됨" : "📋 복사"}
                   </button>
@@ -271,7 +271,7 @@ export default function DateConvertPage() {
         <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
           ℹ️ 역법 안내
         </h3>
-        <div className="text-[10px] sm:text-xs text-gray-500 leading-relaxed space-y-1">
+        <div className="text-xs sm:text-sm text-gray-500 leading-relaxed space-y-1">
           <p>
             <strong className="text-gray-700">양력(그레고리력)</strong>: 전 세계 표준 태양력. 1582년 교황 그레고리오 13세가 도입한 역법입니다.
           </p>

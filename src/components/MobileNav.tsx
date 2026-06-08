@@ -8,22 +8,37 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="flex justify-around items-center py-2">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200 z-50 pb-safe">
+      <div className="flex justify-around items-center py-1.5 px-1">
+        {/* 홈 */}
+        <Link
+          href="/"
+          className={`flex flex-col items-center px-1.5 py-1 rounded-lg transition-colors min-h-0 min-w-0 ${
+            pathname === "/"
+              ? "text-blue-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <span className="text-xl mb-0.5">🏠</span>
+          <span className="text-[11px] font-medium leading-tight">홈</span>
+        </Link>
+        {/* 도구들 */}
         {tools.map((tool) => {
           const isActive = pathname === tool.href;
           return (
             <Link
               key={tool.id}
               href={tool.href}
-              className={`flex flex-col items-center px-2 py-1 rounded-lg transition-colors ${
+              className={`flex flex-col items-center px-1.5 py-1 rounded-lg transition-colors min-h-0 min-w-0 ${
                 isActive
-                  ? "text-indigo-600"
+                  ? "text-blue-600"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
               <span className="text-xl mb-0.5">{tool.icon}</span>
-              <span className="text-[10px] font-medium">{tool.name}</span>
+              <span className="text-[11px] font-medium leading-tight truncate max-w-[64px]">
+                {tool.name}
+              </span>
             </Link>
           );
         })}
