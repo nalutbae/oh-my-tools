@@ -49,4 +49,11 @@ export const tools: Tool[] = [
     icon: "🖼️",
     href: "/tools/image",
   },
+  {
+    id: "date-convert",
+    name: "날짜 변환",
+    description: "양력·음력·페르시아력 변환",
+    icon: "📅",
+    href: "/tools/date-convert",
+  },
 ];
