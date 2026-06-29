@@ -22,6 +22,13 @@ export const tools: Tool[] = [
     href: "/tools/declarative",
   },
   {
+    id: "russian-briefing",
+    name: "러시아 대변인 브리핑",
+    description: "텍스트를 러시아 대변인 스타일로",
+    icon: "🇷🇺",
+    href: "/tools/russian-briefing",
+  },
+  {
     id: "counter",
     name: "글자수 체크",
     description: "텍스트 길이·단어·바이트",
