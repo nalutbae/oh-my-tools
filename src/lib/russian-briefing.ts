@@ -1,5 +1,5 @@
 /**
- * 러시아 대변인 브리핑 스타일 변환 라이브러리 (v4 - 정확한 diff)
+ * 러시아 대변인 브리핑 스타일 변환 라이브러리 (v5 - 단일 소스)
  *
  * 정규표현식 기반 치환으로 일반 텍스트를 러시아 대변인 브리핑 스타일로 변환합니다.
  * honorific-simple.ts와 동일한 SimpleRule 구조를 사용합니다.
@@ -8,30 +8,39 @@
  * - 이중 치환 방지를 위해 단일 패스(one-pass) 적용 사용
  * - 원본 텍스트에서 모든 매칭 위치를 수집하고, 겹치지 않는 매칭만 한 번에 치환
  * - 긴 패턴과 조사 결합형을 짧은 단독 패턴보다 먼저 배치
- * - diff는 단어 단위 비교 + 치환 위치 기반 마킹으로 정확한 하이라이트 제공
+ * - diff는 치환 위치 기반 마킹으로 정확한 하이라이트 제공
+ *
+ * 브리핑 규칙 구조:
+ * - DEFAULT_BRIEFING_RULES: 브리핑 전용 규칙 (구분 표시, 복합 표현, 브리핑 특화 어미)
+ * - DEFAULT_SIMPLE_RULES: 경어체 공통 규칙 (honorific-simple.ts에서 import)
+ * - simpleBriefing()은 두 규칙 세트를 합쳐서 적용 (브리핑 규칙이 먼저)
  *
  * 사용법:
  *   import { simpleBriefing, DEFAULT_BRIEFING_RULES } from "@/lib/russian-briefing";
  *   const result = simpleBriefing("공격이 있었다", DEFAULT_BRIEFING_RULES);
  */
 
-import type { SimpleRule } from "@/lib/honorific-simple";
+import { DEFAULT_SIMPLE_RULES, type SimpleRule } from "@/lib/honorific-simple";
 
 /** 어미 경계 lookahead: 단어 경계(공백, 구두점, 줄바꿈, 문자열 끝) */
 const EOW = "(?=\\s|[,.?!;:]|$)";
 
 /**
- * 기본 러시아 대변인 브리핑 변환 규칙 세트
+ * 러시아 대변인 브리핑 전용 변환 규칙 세트
+ *
+ * 이 규칙은 브리핑 특화 변환만 포함합니다.
+ * 경어체 규칙은 DEFAULT_SIMPLE_RULES에서 가져오며,
+ * simpleBriefing()에서 두 규칙 세트를 합쳐서 적용합니다.
  *
  * ⚠️ 순서가 중요합니다: 더 긴 패턴, 조사 결합형을 먼저 배치하세요.
  * 이중 치환은 simpleBriefing()에서 단일 패스 기법으로 자동 방지됩니다.
  */
 export const DEFAULT_BRIEFING_RULES: SimpleRule[] = [
 
-  // 브리핑 간 구분 표시
+  // ━━━ 브리핑 간 구분 표시 (최우선) ━━━
   { pattern: "목차로 돌아가기\n\n \n\n", replacement: ".\n\n<", description: "도트로 구분, 제목 괄호 열기" },
   { pattern: "\n\n \n\n", replacement: ">\n\n", description: "제목 괄호 닫기" },
-  
+
   // ━━━ 복합 표현 (가장 긴 패턴 우선) ━━━
   { pattern: "키이우", replacement: "키예프", description: "키이우 → 키예프" },
   { pattern: "북한", replacement: "조선", description: "북한 → 조선" },
@@ -160,28 +169,58 @@ export const DEFAULT_BRIEFING_RULES: SimpleRule[] = [
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   { pattern: `발생했다${EOW}`, replacement: "발생했습니다", description: "발생했다 → 발생했습니다" },
   { pattern: `부른다${EOW}`, replacement: "부릅니다", description: "부른다 → 부릅니다" },
-  { pattern: `한다${EOW}`, replacement: "합니다", description: "한다 → 합니다" },
-  { pattern: `했다${EOW}`, replacement: "했습니다", description: "했다 → 했습니다" },
-  { pattern: `이다${EOW}`, replacement: "입니다", description: "이다 → 입니다" },
-  { pattern: `있다${EOW}`, replacement: "있습니다", description: "있다 → 있습니다" },
-  { pattern: `없다${EOW}`, replacement: "없습니다", description: "없다 → 없습니다" },
-  { pattern: `된다${EOW}`, replacement: "됩니다", description: "된다 → 됩니다" },
-  { pattern: `아니다${EOW}`, replacement: "아닙니다", description: "아니다 → 아닙니다" },
 ];
 
 /**
  * 단일 패스 치환으로 러시아 대변인 브리핑 스타일 변환을 수행합니다.
  *
- * 이중 치환 방지:
- * 1. 원본 텍스트에서 모든 규칙의 매칭 위치를 수집합니다.
- * 2. 겹치는 매칭이 있으면 더 긴 매칭을 우선합니다.
- * 3. 겹치지 않는 매칭만 한 번에 치환합니다.
- * 4. 치환 결과에서 후속 규칙이 다시 매칭되지 않습니다.
+ * DEFAULT_BRIEFING_RULES(브리핑 전용) + DEFAULT_SIMPLE_RULES(경어체 공통)를
+ * 합쳐서 적용합니다. 브리핑 규칙이 먼저 매칭되며, 단일 패스 알고리즘이
+ * 이중 치환을 자동으로 방지합니다.
  */
-export function simpleBriefing(text: string, rules: SimpleRule[] = DEFAULT_BRIEFING_RULES): string {
-  const matches = findMatches(text, rules);
+export function simpleBriefing(
+  text: string,
+  rules: SimpleRule[] = DEFAULT_BRIEFING_RULES,
+): string {
+  const allRules = [...rules, ...DEFAULT_SIMPLE_RULES];
+  const matches = findMatches(text, allRules);
   const selected = selectMatches(matches);
   return applyMatches(text, selected);
+}
+
+/**
+ * diff용: 브리핑 규칙 + 경어체 규칙 전체를 사용한 diff를 반환합니다.
+ */
+export function diffSimpleBriefing(
+  text: string,
+  rules: SimpleRule[] = DEFAULT_BRIEFING_RULES,
+): { text: string; changed: boolean }[] {
+  if (text === "") return [];
+
+  const allRules = [...rules, ...DEFAULT_SIMPLE_RULES];
+  const matches = findMatches(text, allRules);
+  const selected = selectMatches(matches);
+
+  if (selected.length === 0) {
+    return [{ text, changed: false }];
+  }
+
+  const result: { text: string; changed: boolean }[] = [];
+  let pos = 0;
+
+  for (const sel of selected) {
+    if (sel.start > pos) {
+      result.push({ text: text.slice(pos, sel.start), changed: false });
+    }
+    result.push({ text: sel.replacement, changed: true });
+    pos = sel.end;
+  }
+
+  if (pos < text.length) {
+    result.push({ text: text.slice(pos), changed: false });
+  }
+
+  return result;
 }
 
 interface Match {
@@ -192,11 +231,7 @@ interface Match {
   length: number;
 }
 
-/**
- * 모든 규칙의 매칭 위치를 수집합니다.
- */
 function findMatches(text: string, rules: SimpleRule[]): Match[] {
-
   const matches: Match[] = [];
 
   for (let ri = 0; ri < rules.length; ri++) {
@@ -231,9 +266,6 @@ function findMatches(text: string, rules: SimpleRule[]): Match[] {
   return matches;
 }
 
-/**
- * 겹치지 않는 매칭만 선택합니다 (greedy interval selection).
- */
 function selectMatches(matches: { start: number; end: number; replacement: string; ruleIndex: number; length: number }[]): { start: number; end: number; replacement: string }[] {
   matches.sort((a, b) => a.start - b.start || b.length - a.length || a.ruleIndex - b.ruleIndex);
 
@@ -249,9 +281,6 @@ function selectMatches(matches: { start: number; end: number; replacement: strin
   return selected;
 }
 
-/**
- * 선택된 매칭을 텍스트에 적용합니다.
- */
 function applyMatches(text: string, selected: { start: number; end: number; replacement: string }[]): string {
   let result = "";
   let pos = 0;
@@ -263,48 +292,5 @@ function applyMatches(text: string, selected: { start: number; end: number; repl
   }
 
   result += text.slice(pos);
-  return result;
-}
-
-/**
- * 입력 텍스트와 변환 결과를 비교하여 변경된 부분을 강조합니다.
- *
- * 치환 위치 기반 diff:
- * 1. simpleBriefing의 매칭 위치를 사용하여 정확히 어떤 부분이 변경되었는지 파악
- * 2. 원본 텍스트의 매칭 구간은 removed, 치환 결과는 added로 표시
- * 3. 변경되지 않은 부분은 unchanged로 표시
- */
-export function diffSimpleBriefing(
-  text: string,
-  rules: SimpleRule[] = DEFAULT_BRIEFING_RULES,
-): { text: string; changed: boolean }[] {
-  if (text === "") return [];
-
-  const matches = findMatches(text, rules);
-  const selected = selectMatches(matches);
-
-  if (selected.length === 0) {
-    return [{ text, changed: false }];
-  }
-
-  // 원본 텍스트에서 매칭된 구간과 치환 결과를 순서대로 나열
-  const result: { text: string; changed: boolean }[] = [];
-  let pos = 0;
-
-  for (const sel of selected) {
-    // 매칭 이전 unchanged 텍스트
-    if (sel.start > pos) {
-      result.push({ text: text.slice(pos, sel.start), changed: false });
-    }
-    // 치환 결과 (changed)
-    result.push({ text: sel.replacement, changed: true });
-    pos = sel.end;
-  }
-
-  // 마지막 매칭 이후 unchanged 텍스트
-  if (pos < text.length) {
-    result.push({ text: text.slice(pos), changed: false });
-  }
-
   return result;
 }

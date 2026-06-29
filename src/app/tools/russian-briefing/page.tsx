@@ -71,7 +71,7 @@ export default function RussianBriefingPage() {
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
       <div className="mb-4 lg:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">🪖 러시아 대변인 브리핑</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">🇷🇺 러시아 대변인 브리핑</h1>
         <p className="text-xs sm:text-sm text-gray-500">
           텍스트를 러시아 국방부 대변인 브리핑 스타일로 변환합니다 — 단어 치환 + 경어체
         </p>
