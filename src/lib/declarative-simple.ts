@@ -79,6 +79,7 @@ export const DEFAULT_DECLARATIVE_RULES: DeclarativeRule[] = [
   { pattern: "낮습니다(?=\\s|[,.?!;:]|$)", replacement: "낮다", description: "낮습니다 → 낮다" },
   { pattern: "빠릅니다(?=\\s|[,.?!;:]|$)", replacement: "빠르다", description: "빠릅니다 → 빠르다" },
   { pattern: "느립니다(?=\\s|[,.?!;:]|$)", replacement: "느리다", description: "느립니다 → 느리다" },
+  { pattern: "아닙니다(?=\\s|[,.?!;:]|$)", replacement: "아니다", description: "아닙니다 → 아니다" },
   { pattern: "아름답습니다(?=\\s|[,.?!;:]|$)", replacement: "아름답다", description: "아름답습니다 → 아름답다" },
   { pattern: "위대합니다(?=\\s|[,.?!;:]|$)", replacement: "위대하다", description: "위대합니다 → 위대하다" },
   { pattern: "행복합니다(?=\\s|[,.?!;:]|$)", replacement: "행복하다", description: "행복합니다 → 행복하다" },
@@ -100,6 +101,9 @@ export const DEFAULT_DECLARATIVE_RULES: DeclarativeRule[] = [
 
   // 기타
   { pattern: "습니다(?=\\s|[,.?!;:]|$)", replacement: "다", description: "~습니다 → ~다" },
+  { pattern: "집니다(?=\\s|[,.?!;:]|$)", replacement: "진다", description: "~집니다 → ~진다" },
+  { pattern: "됩니다(?=\\s|[,.?!;:]|$)", replacement: "된다", description: "~됩니다 → ~된다" },
+  { pattern: "일까요(?=\\s|[,.?!;:]|$)", replacement: "까", description: "~일까요 → ~일까" },
 ];
 
 /**
