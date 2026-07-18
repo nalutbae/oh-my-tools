@@ -90,6 +90,7 @@ export const DEFAULT_SIMPLE_RULES: SimpleRule[] = [
 
   // 
   { pattern: "혔다(?=\s|[,.?!;:]|$)", replacement: "혔습니다", description: "밝혔다 → 밝혔습니다" },
+  { pattern: "렸다(?=\s|[,.?!;:]|$)", replacement: "렸습니다", description: "알렸다 → 알렸습니다" },
   { pattern: "졌다(?=\s|[,.?!;:]|$)", replacement: "졌습니다", description: "이어졌다 → 이어졌습니다" },
   { pattern: "아니다(?=\s|[,.?!;:]|$)", replacement: "아닙니다", description: "아니다 → 아닙니다" },
 
