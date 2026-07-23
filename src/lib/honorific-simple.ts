@@ -93,6 +93,9 @@ export const DEFAULT_SIMPLE_RULES: SimpleRule[] = [
   { pattern: "렸다(?=\s|[,.?!;:]|$)", replacement: "렸습니다", description: "알렸다 → 알렸습니다" },
   { pattern: "졌다(?=\s|[,.?!;:]|$)", replacement: "졌습니다", description: "이어졌다 → 이어졌습니다" },
   { pattern: "아니다(?=\s|[,.?!;:]|$)", replacement: "아닙니다", description: "아니다 → 아닙니다" },
+  { pattern: "같다(?=\s|[,.?!;:]|$)", replacement: "같습니다", description: "같다 → 같습니다" },
+  { pattern: "드러난다(?=\s|[,.?!;:]|$)", replacement: "드러납니다", description: "드러난다 → 드러납니다" },
+  { pattern: "드러낸다(?=\s|[,.?!;:]|$)", replacement: "드러냅니다", description: "드러낸다 → 드러냅니다" },
 
   // ── 해요체 종결 ──
   // ⚠️ "야→요" 규칙은 오변환 위험이 높아 제외 (예: "시야"→"시요")
